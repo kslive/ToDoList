@@ -7,10 +7,11 @@
 //
 
 import UIKit
+import CoreData
 
 class ToDoListViewController: UITableViewController {
     
-    var tasks: [String] = []
+    var tasks: [Task] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,7 +26,7 @@ class ToDoListViewController: UITableViewController {
             let tf =  alert.textFields?.first
             
             if let newTask = tf?.text {
-                self.tasks.insert(newTask, at: 0)
+                self.saveTask(withTitle: newTask)
                 self.tableView.reloadData()
             }
         }
@@ -42,6 +43,23 @@ class ToDoListViewController: UITableViewController {
         present(alert, animated: true)
     }
     
+    private func saveTask(withTitle title: String) {
+        
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+        
+        guard let entity = NSEntityDescription.entity(forEntityName: "Task", in: context) else { return  }
+        
+        let taskObject = Task(entity: entity, insertInto: context)
+        taskObject.title = title
+        
+        do {
+            try context.save()
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
+    }
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
         return 1
     }
@@ -53,7 +71,9 @@ class ToDoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        cell.textLabel?.text = tasks[indexPath.row]
+        
+        let task = tasks[indexPath.row]
+        cell.textLabel?.text = task.title
         
         return cell
     }
